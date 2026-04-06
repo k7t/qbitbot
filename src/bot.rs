@@ -127,6 +127,12 @@ pub async fn run(cfg: Config) -> anyhow::Result<()> {
     // Register commands with Telegram
     bot.set_my_commands(BotCommand::bot_commands()).await?;
 
+    // Drop any updates that arrived while the bot was offline to avoid
+    // replaying stale commands on restart.
+    if let Err(e) = bot.delete_webhook().drop_pending_updates(true).send().await {
+        tracing::warn!("Failed to drop pending updates: {}", e);
+    }
+
     let storage = InMemStorage::<DialogueState>::new();
 
     Dispatcher::builder(bot, schema())
@@ -342,7 +348,7 @@ async fn cmd_paused(bot: Bot, msg: Message, state: AppState) -> HandlerResult {
     if !is_authorized(&msg, &state) {
         return Ok(());
     }
-    send_torrent_list(&bot, &msg, &state, Some(&["pausedDL", "pausedUP"])).await
+    send_torrent_list(&bot, &msg, &state, Some(&["pausedDL", "pausedUP", "stoppedDL", "stoppedUP"])).await
 }
 
 async fn cmd_cancel_noop(bot: Bot, msg: Message, state: AppState) -> HandlerResult {
@@ -488,7 +494,24 @@ async fn handle_torrent_type(
     (paused, category, save_path): (bool, String, String),
 ) -> HandlerResult {
     let text = msg.text().unwrap_or("").trim();
-    let url_mode = text.starts_with("Magnet") || text.starts_with("magnet");
+    let text_lower = text.to_lowercase();
+    let url_mode = if text_lower.starts_with("magnet") {
+        true
+    } else if text_lower.starts_with(".torrent") {
+        false
+    } else {
+        // User sent something unexpected — re-show the choice keyboard
+        let kb = KeyboardMarkup::new(vec![vec![
+            KeyboardButton::new("Magnet/URL"),
+            KeyboardButton::new(".torrent File"),
+        ]])
+        .one_time_keyboard()
+        .resize_keyboard();
+        bot.send_message(msg.chat.id, "Please choose Magnet/URL or .torrent File, or /cancel to abort.")
+            .reply_markup(kb)
+            .await?;
+        return Ok(());
+    };
     let prompt = if url_mode {
         "Paste a magnet link or HTTP(s) URL to a .torrent file."
     } else {
@@ -598,7 +621,7 @@ async fn handle_torrent_input_file(
 
 async fn cmd_cancel(bot: Bot, dialogue: MyDialogue, msg: Message) -> HandlerResult {
     bot.send_message(msg.chat.id, "Operation cancelled.")
-        .reply_markup(KeyboardRemove::new())
+        .reply_markup(persistent_keyboard())
         .await?;
     dialogue.exit().await?;
     Ok(())

@@ -7,6 +7,7 @@ use crate::config::Config;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct TorrentInfo {
+    #[allow(dead_code)]
     pub hash: String,
     pub name: String,
     pub state: String,
@@ -32,7 +33,7 @@ pub struct TorrentInfo {
 
 pub struct QbClient {
     client: reqwest::Client,
-    pub base_url: String,
+    base_url: String,
     username: String,
     password: String,
     login_lock: Mutex<()>,
