@@ -1,0 +1,16 @@
+{
+    "qb_url": "http://localhost:8080",
+    "qb_username": "admin",
+    "qb_password": "adminadmin",
+    "bot_token": "YOUR_BOT_TOKEN_FROM_BOTFATHER",
+    "bot_allowed_users": [123456789],
+    "torrent_list_limit": 10,
+    "torrent_format": "detailed",
+    "categories": [
+        {"name": "Movies",   "save_path": "/path/to/movies"},
+        {"name": "Music",    "save_path": "/path/to/music"},
+        {"name": "Software", "save_path": "/path/to/software"},
+        {"name": "Default",  "save_path": ""}
+    ],
+    "event_server_port": 9091
+}
