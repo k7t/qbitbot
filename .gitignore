@@ -1,3 +1,4 @@
 /target
 config.json
-.*
+/.claude/
+CLAUDE.md
