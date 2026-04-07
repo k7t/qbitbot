@@ -40,7 +40,8 @@ pub fn state_emoji(state: &str) -> &'static str {
     match state {
         "downloading" | "forcedDL" => "⏬",
         "uploading" | "forcedUP" => "⏫",
-        "pausedDL" | "pausedUP" | "stoppedDL" | "stoppedUP" => "⏸️",
+        "pausedDL" | "pausedUP" => "⏸️",
+        "stoppedDL" | "stoppedUP" => "⏹️",
         "queuedDL" | "queuedUP" => "⏯️",
         "checkingDL" | "checkingUP" => "🔍",
         "error" => "❗",
